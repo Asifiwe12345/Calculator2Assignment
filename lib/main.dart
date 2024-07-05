@@ -1,18 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp(
       title: 'Tab Drawer Navigation',
+      themeMode: themeProvider.themeMode,
       theme: ThemeData(
-        primarySwatch: Colors.green, // Changed from blue to green
+        primarySwatch: Colors.green,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
+      darkTheme: ThemeData.dark(),
       home: MyHomePage(),
     );
   }
@@ -23,8 +34,7 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage>
-    with SingleTickerProviderStateMixin {
+class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -41,6 +51,8 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Tab Navigation Example'),
@@ -51,7 +63,7 @@ class _MyHomePageState extends State<MyHomePage>
           children: <Widget>[
             DrawerHeader(
               decoration: BoxDecoration(
-                color: Colors.green, // Changed from blue to green
+                color: Colors.green,
               ),
               child: Text(
                 'Navigation Drawer',
@@ -63,27 +75,38 @@ class _MyHomePageState extends State<MyHomePage>
             ),
             ListTile(
               leading: Icon(Icons.login),
-              title: Text('Login'), // Changed from 'Sign In' to 'Login'
+              title: Text('Login'),
               onTap: () {
-                Navigator.pop(context); // Close the drawer
-                _tabController.animateTo(0); // Switch to Login tab
+                Navigator.pop(context);
+                _tabController.animateTo(0);
               },
             ),
             ListTile(
               leading: Icon(Icons.person_add),
-              title: Text('Register'), // Changed from 'Sign Up' to 'Register'
+              title: Text('Register'),
               onTap: () {
-                Navigator.pop(context); // Close the drawer
-                _tabController.animateTo(1); // Switch to Register tab
+                Navigator.pop(context);
+                _tabController.animateTo(1);
               },
             ),
             ListTile(
               leading: Icon(Icons.calculate),
               title: Text('Calculator'),
               onTap: () {
-                Navigator.pop(context); // Close the drawer
-                _tabController.animateTo(2); // Switch to Calculator tab
+                Navigator.pop(context);
+                _tabController.animateTo(2);
               },
+            ),
+            Divider(),
+            ListTile(
+              leading: Icon(Icons.brightness_6),
+              title: Text('Toggle Theme'),
+              trailing: Switch(
+                value: themeProvider.themeMode == ThemeMode.dark,
+                onChanged: (value) {
+                  themeProvider.toggleTheme(value);
+                },
+              ),
             ),
           ],
         ),
@@ -91,23 +114,23 @@ class _MyHomePageState extends State<MyHomePage>
       body: TabBarView(
         controller: _tabController,
         children: [
-          LoginScreen(), // Changed from SignInScreen to LoginScreen
-          RegisterScreen(), // Changed from SignUpScreen to RegisterScreen
+          LoginScreen(),
+          RegisterScreen(),
           CalculatorScreen(),
         ],
       ),
       bottomNavigationBar: Material(
-        color: Colors.green, // Changed from blue to green
+        color: Colors.green,
         child: TabBar(
           controller: _tabController,
           tabs: [
             Tab(
               icon: Icon(Icons.login),
-              text: 'Login', // Changed from 'Sign In' to 'Login'
+              text: 'Login',
             ),
             Tab(
               icon: Icon(Icons.person_add),
-              text: 'Register', // Changed from 'Sign Up' to 'Register'
+              text: 'Register',
             ),
             Tab(
               icon: Icon(Icons.calculate),
@@ -120,7 +143,38 @@ class _MyHomePageState extends State<MyHomePage>
   }
 }
 
-class LoginScreen extends StatelessWidget { // Changed from SignInScreen to LoginScreen
+class ThemeProvider extends ChangeNotifier {
+  ThemeMode _themeMode = ThemeMode.system;
+
+  ThemeMode get themeMode => _themeMode;
+
+  ThemeProvider() {
+    _loadThemeMode();
+  }
+
+  void _loadThemeMode() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int? themeIndex = prefs.getInt('themeMode');
+    if (themeIndex != null) {
+      _themeMode = ThemeMode.values[themeIndex];
+      notifyListeners();
+    }
+  }
+
+  void toggleTheme(bool isDarkMode) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (isDarkMode) {
+      _themeMode = ThemeMode.dark;
+      prefs.setInt('themeMode', ThemeMode.dark.index);
+    } else {
+      _themeMode = ThemeMode.light;
+      prefs.setInt('themeMode', ThemeMode.light.index);
+    }
+    notifyListeners();
+  }
+}
+
+class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -130,8 +184,8 @@ class LoginScreen extends StatelessWidget { // Changed from SignInScreen to Logi
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Login Screen', // Changed from 'Sign In Screen' to 'Login Screen'
-              style: TextStyle(fontSize: 24, color: Colors.green), // Updated color to green
+              'Login Screen',
+              style: TextStyle(fontSize: 24, color: Colors.green),
             ),
             SizedBox(height: 20),
             TextFormField(
@@ -150,14 +204,14 @@ class LoginScreen extends StatelessWidget { // Changed from SignInScreen to Logi
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(primary: Colors.green), // Changed color to green
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => SignedInScreen()), // No change needed
+                  MaterialPageRoute(builder: (context) => SignedInScreen()),
                 );
               },
-              child: Text('Login'), // Changed from 'Sign In' to 'Login'
+              style: ElevatedButton.styleFrom(),
+              child: Text('Login'),
             ),
           ],
         ),
@@ -172,19 +226,19 @@ class SignedInScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Welcome'),
-        backgroundColor: Colors.green, // Changed from default color to green
+        backgroundColor: Colors.green,
       ),
       body: Center(
         child: Text(
-          'Welcome! You are now logged in.', // Changed from 'signed in' to 'logged in'
-          style: TextStyle(fontSize: 24, color: Colors.green), // Updated color to green
+          'Welcome! You are now logged in.',
+          style: TextStyle(fontSize: 24, color: Colors.green),
         ),
       ),
     );
   }
 }
 
-class RegisterScreen extends StatelessWidget { // Changed from SignUpScreen to RegisterScreen
+class RegisterScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -194,8 +248,8 @@ class RegisterScreen extends StatelessWidget { // Changed from SignUpScreen to R
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Register Screen', // Changed from 'Sign Up Screen' to 'Register Screen'
-              style: TextStyle(fontSize: 24, color: Colors.green), // Updated color to green
+              'Register Screen',
+              style: TextStyle(fontSize: 24, color: Colors.green),
             ),
             SizedBox(height: 20),
             TextFormField(
@@ -229,14 +283,14 @@ class RegisterScreen extends StatelessWidget { // Changed from SignUpScreen to R
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(primary: Colors.green), // Changed color to green
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => SignedUpScreen()), // No change needed
+                  MaterialPageRoute(builder: (context) => SignedUpScreen()),
                 );
               },
-              child: Text('Register'), // Changed from 'Sign Up' to 'Register'
+              style: ElevatedButton.styleFrom(),
+              child: Text('Register'),
             ),
           ],
         ),
@@ -251,12 +305,12 @@ class SignedUpScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Welcome'),
-        backgroundColor: Colors.green, // Changed from default color to green
+        backgroundColor: Colors.green,
       ),
       body: Center(
         child: Text(
-          'Welcome! You are now registered.', // Changed from 'signed up' to 'registered'
-          style: TextStyle(fontSize: 24, color: Colors.green), // Updated color to green
+          'Welcome! You are now registered.',
+          style: TextStyle(fontSize: 24, color: Colors.green),
         ),
       ),
     );
@@ -266,10 +320,12 @@ class SignedUpScreen extends StatelessWidget {
 class CalculatorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Calculator',
-      home: Calculation(),
-      theme: ThemeData.dark(), // No change needed
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Calculator'),
+        backgroundColor: Colors.green,
+      ),
+      body: Calculation(),
     );
   }
 }
@@ -299,108 +355,115 @@ class _CalculationState extends State<Calculation> {
         }
       } else if (input == '=') {
         while (inputList.length > 2) {
-          int firstNumber = inputList.removeAt(0) as int;
-          String operator = inputList.removeAt(0);
-          int secondNumber = inputList.removeAt(0) as int;
-          int partialResult = 0;
-
-          if (operator == '+') {
-            partialResult = firstNumber + secondNumber;
-          } else if (operator == '-') {
-            partialResult = firstNumber - secondNumber;
-          } else if (operator == '*') {
-            partialResult = firstNumber * secondNumber;
-          } else if (operator == '/') {
-            partialResult = firstNumber ~/ secondNumber;
-            if (secondNumber == 0) {
-              partialResult = firstNumber; // Handle division by zero
-            }
-          }
-
-          inputList.insert(0, partialResult);
+          inputList = _calculate(inputList);
         }
-
-        output = '${inputList[0]}';
+        output = inputList[0].toString();
       } else {
-        int? inputNumber = int.tryParse(input);
-        if (inputNumber != null) {
-          if (inputList.last is int && !_isOperator(output[output.length - 1])) {
-            int lastNumber = (inputList.last as int);
-            lastNumber = lastNumber * 10 + inputNumber;
-            inputList.last = lastNumber;
-
-            output = output.substring(0, output.length - 1) + lastNumber.toString();
-          } else {
-            inputList.add(inputNumber);
-            output += input;
-          }
+        if (inputList.last is int) {
+          int currentValue = inputList.removeLast();
+          currentValue = currentValue * 10 + int.parse(input);
+          inputList.add(currentValue);
+          output += input;
+        } else {
+          inputList.add(int.parse(input));
+          output += input;
         }
       }
     });
   }
 
   bool _isOperator(String input) {
-    return ['+', '-', '*', '/'].contains(input);
+    return input == '+' || input == '-' || input == '*' || input == '/';
+  }
+
+  List<dynamic> _calculate(List<dynamic> list) {
+    int result = list[0];
+    String operator = list[1];
+    int operand = list[2];
+
+    switch (operator) {
+      case '+':
+        result += operand;
+        break;
+      case '-':
+        result -= operand;
+        break;
+      case '*':
+        result *= operand;
+        break;
+      case '/':
+        result ~/= operand;
+        break;
+    }
+    list.removeRange(0, 3);
+    list.insert(0, result);
+
+    return list;
+  }
+
+  Widget _buildButton(String input) {
+    return Expanded(
+      child: Container(
+        color: Colors.green, // Adjust color here if needed
+        child: ElevatedButton(
+          onPressed: () => _handlePress(input),
+          style: ElevatedButton.styleFrom(),
+          child: Text(
+            input,
+            style: TextStyle(fontSize: 24),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Calculator"),
-        backgroundColor: Colors.green, // Changed from default color to green
-      ),
-      body: Container(
-        child: Column(
-          children: <Widget>[
-            Container(
-              child: TextField(
-                style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.green), // Updated color to green
-                textAlign: TextAlign.right,
-                decoration: InputDecoration(border: InputBorder.none),
-                controller: TextEditingController()..text = output,
-                readOnly: true,
-              ),
+    return Column(
+      children: [
+        Expanded(
+          child: Container(
+            padding: EdgeInsets.all(16),
+            alignment: Alignment.centerRight,
+            child: Text(
+              output,
+              style: TextStyle(fontSize: 48, color: Colors.green),
             ),
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 4,
-                children: <Widget>[
-                  for (var i = 0; i <= 9; i++)
-                    TextButton(
-                      child: Text("$i", style: TextStyle(fontSize: 25, color: Colors.green)), // Updated color to green
-                      onPressed: () => _handlePress("$i"),
-                    ),
-                  TextButton(
-                    child: Text("C", style: TextStyle(fontSize: 25, color: Colors.green)), // Updated color to green
-                    onPressed: _handleClear,
-                  ),
-                  TextButton(
-                    child: Text("+", style: TextStyle(fontSize: 25, color: Colors.green)), // Updated color to green
-                    onPressed: () => _handlePress("+"),
-                  ),
-                  TextButton(
-                    child: Text("-", style: TextStyle(fontSize: 25, color: Colors.green)), // Updated color to green
-                    onPressed: () => _handlePress("-"),
-                  ),
-                  TextButton(
-                    child: Text("*", style: TextStyle(fontSize: 25, color: Colors.green)), // Updated color to green
-                    onPressed: () => _handlePress("*"),
-                  ),
-                  TextButton(
-                    child: Text("/", style: TextStyle(fontSize: 25, color: Colors.green)), // Updated color to green
-                    onPressed: () => _handlePress("/"),
-                  ),
-                  TextButton(
-                    child: Text("=", style: TextStyle(fontSize: 25, color: Colors.green)), // Updated color to green
-                    onPressed: () => _handlePress("="),
-                  ),
-                ],
-              ),
-            ),
+          ),
+        ),
+        Row(
+          children: [
+            _buildButton('1'),
+            _buildButton('2'),
+            _buildButton('3'),
+            _buildButton('+'),
           ],
         ),
-      ),
+        Row(
+          children: [
+            _buildButton('4'),
+            _buildButton('5'),
+            _buildButton('6'),
+            _buildButton('-'),
+          ],
+        ),
+        Row(
+          children: [
+            _buildButton('7'),
+            _buildButton('8'),
+            _buildButton('9'),
+            _buildButton('*'),
+          ],
+        ),
+        Row(
+          children: [
+            _buildButton('0'),
+            _buildButton('='),
+            _buildButton('C'),
+            _buildButton('/'),
+          ],
+        ),
+      ],
     );
   }
 }
